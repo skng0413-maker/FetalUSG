@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fetal Ultrasound Clinical Reference & Calculator Suite</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        medical: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            800: '#0c4a6e',
+                            900: '#0a3651',
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.com">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(156, 163, 175, 0.4); border-radius: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(156, 163, 175, 0.7); }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen transition-colors duration-200 text-xs">
+
+    <!-- Compact Header Bar -->
+    <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm">
+        <div class="max-w-7xl mx-auto px-3 py-2 flex items-center justify-between">
+            
+            <!-- Left Branding -->
+            <div class="flex items-center space-x-2">
+                <div class="p-1.5 bg-medical-600 text-white rounded-lg shadow-sm">
+                    <i class="fa-solid fa-baby text-xs"></i>
+                </div>
+                <h1 class="font-bold text-sm tracking-tight text-slate-900 dark:text-white hidden sm:block">Fetal Echo & US Calc</h1>
+            </div>
+
+            <!-- Categorized Selector Dropdown (Alphabetized Options) -->
+            <div class="flex-1 max-w-lg mx-1">
+                <label for="chartSelect" class="sr-only">Select Clinical Reference</label>
+                <div class="relative">
+                    <select id="chartSelect" onchange="switchDataset(this.value)" class="w-full pl-8 pr-8 py-1.5 bg-slate-100 dark:bg-slate-700/80 border border-slate-300 dark:border-slate-600 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-medical-500 transition cursor-pointer appearance-none truncate">
+                        <optgroup label="1. Fetal Biometry">
+                            <option value="two_sd">2SD BPD, HC, AC</option>
+                            <option value="crl">Crown-Rump Length (CRL)</option>
+                            <option value="efw">Estimated Fetal Weight (EFW Percentiles)</option>
+                            <option value="ga_ref">Gestational Age (BPD, HC, AC, FL, TCD)</option>
+                        </optgroup>
+                        <optgroup label="2. Long Bones & Extremities">
+                            <option value="bpd_bones">BPD to Bone Length Ratios (Femur, Tibia, Fibula, Humerus, Radius)</option>
+                            <option value="two_sd_ll">Lower Limb 2SD Limits (Femur, Tibia, Fibula)</option>
+                            <option value="two_sd_ul">Upper Limb 2SD Limits (Humerus, Radius, Ulna)</option>
+                        </optgroup>
+                        <optgroup label="3. Abdomen & Organs">
+                            <option value="afi">Amniotic Fluid Index (AFI)</option>
+                            <option value="bladder">Bladder Bifrontal Ventricle Horn Width</option>
+                            <option value="gb_length">Gall Bladder Length</option>
+                            <option value="gb_td">Gall Bladder Transverse Diameter (TD)</option>
+                            <option value="kidneys">Kidneys Diameter & Circumference</option>
+                            <option value="ls_length">Lower Segment Length</option>
+                            <option value="penis">Penile Length Percentiles (10th, Mean, 90th)</option>
+                            <option value="placental">Placental Thickness</option>
+                            <option value="tc_ac">Thoracic / Abdominal Ratio (TC/AC)</option>
+                            <option value="colon_td">Transverse Colon Diameter</option>
+                        </optgroup>
+                        <optgroup label="4. Doppler & Brain">
+                            <option value="mca_pi">Middle Cerebral Artery (MCA) PI</option>
+                            <option value="umb_pi">Umbilical Artery PI (Umbilical PI)</option>
+                            <option value="umb_ri">Umbilical Artery RI (Umbilical RI)</option>
+                        </optgroup>
+                    </select>
+                    <i class="fa-solid fa-list-ul absolute left-2.5 top-1/2 -translate-y-1/2 text-medical-500 dark:text-medical-400 text-xs"></i>
+                    <i class="fa-solid fa-chevron-down absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-[10px] pointer-events-none"></i>
+                </div>
+            </div>
+
+            <!-- Right Theme Toggle -->
+            <div class="flex items-center">
+                <button onclick="toggleDarkMode()" class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600 transition text-xs" title="Toggle Theme">
+                    <i id="themeIcon" class="fa-solid fa-moon"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-3 py-3 space-y-3">
+
+        <!-- Calculator / Reference Lookup Banner -->
+        <section class="bg-gradient-to-r from-medical-800 to-slate-900 rounded-xl text-white p-3 shadow-md relative overflow-hidden">
+            <div class="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div class="space-y-0.5">
+                    <span id="categoryBadge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-medical-500/30 text-sky-200 border border-sky-400/30">
+                        <i class="fa-solid fa-folder"></i> Fetal Biometry
+                    </span>
+                    <h2 id="activeTitle" class="text-sm font-bold tracking-tight text-white leading-tight">2SD Upper & Lower Limits</h2>
+                    <p id="activeDesc" class="text-[11px] text-slate-300 line-clamp-1">Normal fetal biometry reference intervals (+/-2 Standard Deviations) for BPD, HC, and AC.</p>
+                </div>
+
+                <!-- Compact Lookup Calculator -->
+                <div class="bg-white/10 backdrop-blur-md border border-white/20 p-2 rounded-lg flex items-center gap-2 shrink-0">
+                    <div>
+                        <label class="block text-[10px] font-medium text-slate-300" id="lookupLabel">Select GA (Wks)</label>
+                        <input type="number" id="calcInput" min="1" max="100" step="1" placeholder="e.g. 28" oninput="runCalculator()" class="w-20 py-1 px-2 rounded bg-slate-900/80 border border-slate-600 text-white font-bold text-xs focus:outline-none focus:ring-1 focus:ring-sky-400">
+                    </div>
+                    <div id="calcOutput" class="min-w-[140px] pl-2 border-l border-white/20">
+                        <span class="text-[10px] text-slate-400 block leading-none mb-0.5">Lookup Result</span>
+                        <span id="calcValue" class="text-xs font-bold text-sky-300 block leading-tight">Enter value</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Dynamic Grid Content (Chart + Table) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-3">
+
+            <!-- Chart Card (Only visible for Doppler & Brain: MCA PI, Umb PI, Umb RI) -->
+            <div id="chartCard" class="hidden lg:col-span-6 bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-200 dark:border-slate-700 shadow-sm flex-col">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-chart-line text-medical-500 text-xs"></i>
+                        <h3 class="font-bold text-xs text-slate-900 dark:text-white">Doppler Waveform Visualization</h3>
+                    </div>
+                    <span id="formulaTag" class="hidden text-[10px] bg-sky-100 dark:bg-sky-900/50 text-sky-700 dark:text-sky-300 font-mono px-2 py-0.5 rounded border border-sky-300 dark:border-sky-700"></span>
+                </div>
+                <div class="relative flex-1 min-h-[260px] w-full flex items-center justify-center">
+                    <canvas id="mainChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Table Card (Dynamically expands to 12 cols when chart is hidden) -->
+            <div id="tableCard" class="lg:col-span-12 bg-white dark:bg-slate-800 rounded-xl p-3 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col transition-all duration-200">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-1.5">
+                        <i class="fa-solid fa-table text-medical-500 text-xs"></i>
+                        <h3 class="font-bold text-xs text-slate-900 dark:text-white">Clinical Dataset Reference Values</h3>
+                    </div>
+                    <!-- Search Filter -->
+                    <div class="relative w-32">
+                        <input type="text" id="tableFilter" onkeyup="filterTable()" placeholder="Filter..." class="w-full pl-6 pr-2 py-1 bg-slate-100 dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded text-[11px] text-slate-800 dark:text-slate-100 focus:outline-none">
+                        <i class="fa-solid fa-magnifying-glass absolute left-2 top-1/2 -translate-y-1/2 text-slate-400 text-[10px]"></i>
+                    </div>
+                </div>
+
+                <!-- High-Density Scrollable Table -->
+                <div class="flex-1 overflow-auto max-h-[620px] custom-scrollbar border border-slate-200 dark:border-slate-700/80 rounded-lg">
+                    <table class="w-full text-left border-collapse text-[11px]">
+                        <thead id="tableHead" class="sticky top-0 bg-slate-100 dark:bg-slate-700/90 backdrop-blur font-semibold text-slate-700 dark:text-slate-200 border-b border-slate-200 dark:border-slate-600">
+                            <!-- Injected Headers -->
+                        </thead>
+                        <tbody id="tableBody" class="divide-y divide-slate-100 dark:divide-slate-700/50 text-slate-600 dark:text-slate-300">
+                            <!-- Injected Data Rows -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Script Data Store & Core Engine -->
+    <script>
+        // 19 Complete Datasets compiled precisely from extracted ultrasound charts
+        const DATASETS = {
+            // Category 1: Fetal Biometry
+            two_sd: {
+                title: "2SD BPD, HC, AC",
+                category: "Fetal Biometry",
+                description: "Normal fetal biometry reference intervals (+/-2 Standard Deviations) for BPD, HC, and AC.",
+                lookupLabel: "GA (Weeks)",
+                headers: ["GA (wk)", "BPD (mm)", "HC (mm)", "AC (mm)"],
+                calc: (ga) => {
+                    const row = DATASETS.two_sd.rows.find(r => r[0] == ga);
+                    if(!row) return null;
+                    return `BPD: ${row[1]} | HC: ${row[2]} | AC: ${row[3] || 'N/A'}`;
+                },
+                rows: [
+                    [12, "19-25", "51-89", "-"], [13, "22-28", "65-103", "-"], [14, "25-32", "79-117", "-"], [15, "28-36", "92-130", "-"],
+                    [16, "31-39", "105-143", "-"], [17, "33-43", "118-156", "-"], [18, "36-46", "131-169", "-"], [19, "39-50", "144-182", "-"],
+                    [20, "42-54", "156-194", "140-170"], [21, "45-57", "168-206", "151-184"], [22, "48-60", "180-218", "161-197"],
+                    [23, "51-64", "191-229", "177-210"], [24, "54-67", "202-240", "181-223"], [25, "57-70", "213-251", "191-235"],
+                    [26, "60-73", "223-261", "200-247"], [27, "63-76", "233-271", "209-259"], [28, "66-79", "243-281", "217-270"],
+                    [29, "68-82", "252-290", "226-281"], [30, "71-85", "261-299", "234-291"], [31, "73-87", "270-308", "242-301"],
+                    [32, "76-90", "278-316", "249-311"], [33, "78-92", "285-323", "257-320"], [34, "80-94", "293-331", "264-329"],
+                    [35, "82-96", "299-337", "270-337"], [36, "84-98", "306-344", "275-345"], [37, "86-99", "311-349", "283-353"],
+                    [38, "87-100", "319-355", "289-360"], [39, "89-101", "322-360", "294-367"], [40, "90-102", "326-364", "300-374"],
+                    [41, "91-103", "-", "304-380"], [42, "91-103", "-", "309-385"]
+                ],
+                showGraph: false
+            },
+            crl: {
+                title: "Crown-Rump Length (CRL)",
+                category: "Fetal Biometry",
+                description: "Ultrasound dating chart mapping Crown-Rump Length (mm) to Gestational Age (Weeks+Days).",
+                lookupLabel: "CRL (mm)",
+                headers: ["CRL (mm)", "Gestational Age (Wks+Days)"],
+                calc: (crl) => {
+                    const row = DATASETS.crl.rows.find(r => {
+                        if(typeof r[0] === 'number') return r[0] == crl;
+                        const [min, max] = r[0].split('-').map(Number);
+                        return crl >= min && crl <= max;
+                    });
+                    return row ? `Maturity: ${row[1]}` : null;
+                },
+                rows: [
+                    [7, "6+2"], [8, "6+4"], [9, "6+5"], [10, "7+0"], [11, "7+1"], [12, "7+2"], [13, "7+3"], [14, "7+5"], [15, "7+6"],
+                    [16, "8+0"], [17, "8+1"], [18, "8+2"], [19, "8+3"], [20, "8+4"], ["21-22", "8+5"], [23, "8+6"], [24, "9+0"], [25, "9+1"],
+                    [26, "9+2"], ["27-28", "9+3"], [29, "9+4"], [30, "9+5"], ["31-32", "9+6"], [33, "10+0"], [34, "10+1"], ["35-36", "10+2"],
+                    [37, "10+3"], ["38-39", "10+4"], [40, "10+5"], ["41-42", "10+6"], [43, "11+0"], ["44-45", "11+1"], ["46-47", "11+2"],
+                    [48, "11+3"], ["49-50", "11+4"], ["51-52", "11+5"], [53, "11+6"], ["54-55", "12+0"], ["56-57", "12+1"], ["58-59", "12+2"],
+                    ["60-61", "12+3"], [62, "12+4"], ["63-64", "12+5"], ["65-66", "12+6"], ["67-68", "13+0"], ["69-70", "13+1"], ["71-72", "13+2"],
+                    ["73-74", "13+3"], ["75-77", "13+4"], ["78-79", "13+5"], ["80-81", "13+6"], [82, "14+0"]
+                ],
+                showGraph: false
+            },
+            efw: {
+                title: "Estimated Fetal Weight (EFW Percentiles)",
+                category: "Fetal Biometry",
+                description: "Fetal weight percentiles (10th, 25th, 50th, 75th, 90th) in grams by Gestational Age.",
+                lookupLabel: "GA (Weeks)",
+                headers: ["Wk", "10th (g)", "25th (g)", "50th (g)", "75th (g)", "90th (g)"],
+                calc: (ga) => {
+                    const row = DATASETS.efw.rows.find(r => r[0] == ga);
+                    if(!row) return null;
+                    return `10th: ${row[1]}g | 50th: ${row[3]}g | 90th: ${row[5]}g`;
+                },
+                rows: [
+                    [29, 1000, 1130, 1270, 1390, 1540], [30, 1150, 1300, 1440, 1590, 1750], [31, 1310, 1470, 1630, 1790, 1970],
+                    [32, 1480, 1650, 1820, 2010, 2200], [33, 1650, 1830, 2020, 2230, 2430], [34, 1830, 2020, 2210, 2440, 2660],
+                    [35, 2010, 2210, 2410, 2660, 2880], [36, 2190, 2390, 2600, 2860, 3090], [37, 2360, 2570, 2780, 3050, 3290],
+                    [38, 2510, 2730, 2940, 3230, 3460], [39, 2660, 2880, 3080, 3380, 3610], [40, 2780, 3010, 3210, 3500, 3730],
+                    [41, 2880, 3120, 3310, 3590, 3810], [42, 2950, 3190, 3370, 3640, 3850]
+                ],
+                showGraph: false
+            },
+            ga_ref: {
+                title: "Gestational Age Reference",
+                category: "Fetal Biometry",
+                description: "Standard mean reference measurements across gestational ages 12 through 42 weeks.",
+                lookupLabel: "GA (Weeks)",
+                headers: ["GA (wk)", "BPD (mm)", "HC (mm)", "AC (mm)", "FL (mm)", "TCD (mm)"],
+                calc: (ga) => {
+                    const row = DATASETS.ga_ref.rows.find(r => r[0] == ga);
+                    if(!row) return null;
+                    return `BPD: ${row[1]} | HC: ${row[2]} | AC: ${row[3] || 'N/A'} | FL: ${row[4]} | TCD: ${row[5] || 'N/A'}`;
+                },
+                rows: [
+                    [12, "21-23", "65-75", "-", "8-10", "9-16"], [13, "24-26", "76-93", "-", "11-13", "11"],
+                    [14, "27-29", "94-104", "-", "14-16", "12"], [15, "30-33", "105-117", "-", "17-20", "13-14"],
+                    [16, "34-36", "118-130", "-", "21-23", "15"], [17, "37-39", "131-143", "-", "24-26", "16"],
+                    [18, "40-43", "144-156", "-", "27-29", "17-18"], [19, "44-46", "157-169", "-", "30-32", "19"],
+                    [20, "47-49", "170-181", "149-161", "33-35", "20"], [21, "50-52", "182-193", "162-173", "36-38", "21-22"],
+                    [22, "53-56", "194-204", "174-185", "39-41", "23"], [23, "57-59", "205-215", "186-196", "42-43", "24"],
+                    [24, "60-62", "216-226", "197-207", "44-46", "25"], [25, "63-65", "227-237", "208-218", "47-48", "26-27"],
+                    [26, "66-68", "238-247", "219-228", "49-51", "28"], [27, "69-71", "248-257", "229-239", "52-53", "29-30"],
+                    [28, "72-73", "258-266", "240-248", "54-56", "31"], [29, "74-76", "267-274", "249-257", "57-58", "32-33"],
+                    [30, "77-78", "275-284", "258-266", "59-60", "34"], [31, "79-81", "285-293", "267-275", "61-62", "35-36"],
+                    [32, "82-83", "294-300", "276-284", "63-64", "37-38"], [33, "84-85", "301-308", "285-292", "65-66", "39-40"],
+                    [34, "86-87", "309-315", "293-300", "67-68", "41-42"], [35, "88-89", "316-321", "301-307", "69-70", "43-45"],
+                    [36, "90-91", "322-327", "308-314", "71-72", "46-49"], [37, "92", "328-333", "315-321", "73", "50-"],
+                    [38, "93-94", "334-338", "322-327", "74-75", "-"], [39, "95", "339-343", "328-334", "76-77", "-"],
+                    [40, "96", "344-", "335-339", "78", "-"], [41, "97", "-", "340-344", "79", "-"], [42, "98", "-", "345-", "80-81", "-"]
+                ],
+                showGraph: false
+            },
+
+            // Category 2: Long Bones & Extremities
+            bpd_bones: {
+                title: "BPD to Bone Length Ratios",
+                category: "Long Bones & Extremities",
+                description: "Expected long bone lengths (Femur, Tibia, Fibula, Humerus, Radius in mm) matched against BPD (21-100 mm).",
+                lookupLabel: "BPD (mm)",
+                headers: ["BPD (mm)", "Femur (mm)", "Tibia (mm)", "Fibula (mm)", "Humerus (mm)", "Radius (mm)"],
+                calc: (bpd) => {
+                    const row = DATASETS.bpd_bones.rows.find(r => r[0] == bpd);
+                    if(!row) return null;
+                    return `Femur: ${row[1]} | Tibia: ${row[2]} | Fibula: ${row[3]} | Hum: ${row[4]} | Rad: ${row[5]}`;
+                },
+                rows: [
+                    [21, "6-11", "4-11", "5-8", "8-15", "6-6"], [22, "7-12", "4-12", "6-9", "9-16", "7-7"],
+                    [23, "8-13", "5-13", "7-10", "9-17", "7-8"], [24, "9-14", "6-14", "7-11", "10-18", "8-9"],
+                    [25, "9-15", "7-15", "8-12", "11-18", "8-10"], [26, "10-16", "7-15", "8-12", "11-19", "9-11"],
+                    [27, "11-17", "8-16", "9-13", "12-20", "9-12"], [28, "12-18", "8-17", "9-14", "12-21", "10-13"],
+                    [29, "12-19", "9-18", "10-15", "13-22", "10-14"], [30, "13-20", "10-19", "11-16", "14-22", "11-15"],
+                    [31, "14-21", "10-20", "11-17", "14-23", "11-16"], [32, "15-22", "11-21", "12-17", "15-24", "12-17"],
+                    [33, "15-23", "12-22", "12-18", "16-25", "13-18"], [34, "16-24", "13-22", "13-19", "16-25", "13-19"],
+                    [35, "17-25", "13-23", "13-20", "17-26", "14-20"], [36, "17-26", "14-24", "14-21", "17-27", "14-20"],
+                    [37, "18-27", "15-25", "14-22", "18-28", "15-21"], [38, "19-28", "15-26", "15-23", "19-29", "15-22"],
+                    [39, "20-29", "16-27", "16-23", "19-29", "16-23"], [40, "20-30", "17-28", "16-24", "20-30", "16-24"],
+                    [45, "24-35", "20-32", "19-29", "23-34", "19-28"], [50, "28-40", "23-36", "22-33", "26-38", "22-32"],
+                    [55, "31-45", "27-41", "25-37", "29-42", "24-36"], [60, "35-50", "30-45", "27-41", "32-46", "27-40"],
+                    [65, "39-55", "33-50", "30-46", "35-49", "29-43"], [70, "43-60", "37-54", "33-50", "39-53", "32-46"],
+                    [75, "46-65", "40-58", "36-54", "42-57", "35-49"], [80, "50-70", "44-63", "39-59", "45-61", "37-51"],
+                    [85, "54-75", "47-67", "41-63", "48-65", "40-54"], [90, "57-80", "50-71", "44-67", "51-69", "42-56"],
+                    [95, "61-85", "54-76", "47-72", "54-73", "44-57"], [100, "65-90", "57-80", "50-76", "57-77", "47-59"]
+                ],
+                showGraph: false
+            },
+            two_sd_ll: {
+                title: "Lower Limb 2SD Limits",
+                category: "Long Bones & Extremities",
+                description: "Normal reference intervals (+/-2SD in mm) for Lower Limb bones: Femur, Tibia, Fibula.",
+                lookupLabel: "GA (Weeks)",
+                headers: ["GA (wk)", "Femur (mm)", "Tibia (mm)", "Fibula (mm)"],
+                calc: (ga) => {
+                    const row = DATASETS.two_sd_ll.rows.find(r => r[0] == ga);
+                    if(!row) return null;
+                    return `Femur: ${row[1] || 'N/A'} | Tibia: ${row[2]} | Fibula: ${row[3]}`;
+                },
+                rows: [
+                    [13, "-", "6.1-11.7", "5.7-11.5"], [14, "12-18", "8.9-14.7", "8.4-14.4"], [15, "15-22", "11.7-17.7", "11.2-17.3"],
+                    [16, "18-25", "14.4-20.6", "13.8-20.2"], [17, "21-28", "17.1-23.5", "16.5-23.0"], [18, "24-32", "19.8-26.3", "19.1-25.8"],
+                    [19, "27-35", "22.4-29.0", "21.6-28.5"], [20, "30-38", "24.9-31.7", "24.1-31.1"], [21, "33-41", "27.4-34.4", "26.5-33.7"],
+                    [22, "36-44", "29.8-37.0", "28.9-36.3"], [23, "38-47", "32.2-39.5", "31.2-38.8"], [24, "41-50", "34.5-42.0", "33.5-41.2"],
+                    [25, "43-52", "36.7-44.4", "35.7-43.6"], [26, "46-55", "38.9-46.7", "37.8-45.8"], [27, "48-57", "41.0-49.0", "39.8-48.1"],
+                    [28, "50-60", "43.0-51.2", "41.8-50.2"], [29, "52-62", "44.9-53.3", "43.7-52.2"], [30, "55-65", "46.7-55.3", "45.5-54.2"],
+                    [31, "57-67", "48.5-57.2", "47.2-56.1"], [32, "58-69", "50.2-59.1", "48.8-57.9"], [33, "60-71", "51.8-60.8", "50.3-59.6"],
+                    [34, "62-73", "53.3-62.5", "51.3-61.3"], [35, "64-75", "54.7-64.1", "53.2-62.8"], [36, "65-77", "56.0-65.6", "54.4-64.2"],
+                    [37, "67-79", "57.2-66.9", "55.6-65.5"], [38, "69-81", "58.3-68.2", "56.6-66.8"], [39, "70-83", "59.3-69.4", "57.6-67.9"],
+                    [40, "71-84", "60.2-70.4", "58.4-68.9"], [41, "-", "60.9-71.4", "59.1-69.8"], [42, "-", "61.6-72.2", "59.7-70.6"]
+                ],
+                showGraph: false
+            },
+            two_sd_ul: {
+                title: "Upper Limb 2SD Limits",
+                category: "Long Bones & Extremities",
+                description: "Normal reference intervals (+/-2SD in mm) for Upper Limb bones: Humerus, Radius, Ulna.",
+                lookupLabel: "GA (Weeks)",
+                headers: ["GA (wk)", "Humerus (mm)", "Radius (mm)", "Ulna (mm)"],
+                calc: (ga) => {
+                    const row = DATASETS.two_sd_ul.rows.find(r => r[0] == ga);
+                    if(!row) return null;
+                    return `Humerus: ${row[1]} | Radius: ${row[2]} | Ulna: ${row[3]}`;
+                },
+                rows: [
+                    [13, "8.2-14.5", "6.4-13.0", "7.1-14.0"], [14, "11.2-17.7", "8.8-15.5", "9.8-16.8"], [15, "14.2-20.7", "11.2-18.0", "12.5-19.6"],
+                    [16, "17.0-23.7", "13.5-20.5", "15.1-22.3"], [17, "19.8-26.6", "15.8-22.9", "17.7-25.0"], [18, "22.5-29.4", "18.0-25.2", "20.2-27.7"],
+                    [19, "25.1-32.1", "20.2-27.5", "22.7-30.3"], [20, "27.6-34.7", "22.3-29.7", "25.1-32.8"], [21, "30.0-37.3", "24.4-31.9", "27.4-35.3"],
+                    [22, "32.3-39.7", "26.4-34.1", "29.7-37.7"], [23, "34.6-42.1", "28.3-36.1", "31.9-40.0"], [24, "36.7-44.4", "30.2-38.1", "34.1-42.3"],
+                    [25, "38.8-46.6", "32.0-40.0", "36.2-44.5"], [26, "40.8-48.7", "33.8-41.9", "38.2-46.7"], [27, "42.7-50.7", "35.4-43.7", "40.1-48.7"],
+                    [28, "44.5-52.7", "37.0-45.4", "42.0-50.7"], [29, "46.3-54.5", "38.5-47.0", "43.7-52.6"], [30, "47.9-56.3", "39.9-48.5", "45.4-54.4"],
+                    [31, "49.5-58.0", "41.2-50.0", "47.0-56.1"], [32, "51.0-59.6", "42.5-51.4", "48.5-57.8"], [33, "52.4-61.1", "43.6-52.6", "50.0-59.3"],
+                    [34, "53.7-62.5", "44.7-53.8", "51.3-60.8"], [35, "54.9-63.9", "45.7-54.9", "52.5-62.1"], [36, "56.0-65.1", "46.5-55.9", "53.6-63.4"],
+                    [37, "57.1-66.3", "47.3-56.7", "54.6-64.5"], [38, "58.0-67.4", "47.9-57.5", "55.5-65.5"], [39, "58.9-68.4", "48.5-58.2", "56.3-66.4"],
+                    [40, "59.7-69.3", "48.9-58.7", "57.0-67.3"], [41, "60.4-70.1", "49.2-59.1", "57.6-67.9"], [42, "61.0-70.9", "49.4-59.5", "58.0-68.5"]
+                ],
+                showGraph: false
+            },
+
+            // Category 3: Abdomen & Organs
+            afi: {
+                title: "Amniotic Fluid Index (AFI)",
+                category: "Abdomen & Organs",
+                description: "Reference ranges for Amniotic Fluid Index (mm) showing 2.5th and 97.5th percentiles.",
+                lookupLabel: "GA (Weeks)",
+                headers: ["Week", "2.5th Percentile (mm)", "97.5th Percentile (mm)"],
+                calc: (ga) => {
+                    const row = DATASETS.afi.rows.find(r => r[0] == ga);
+                    if(!row) return null;
+                    return `Normal AFI: ${row[1]} mm - ${row[2]} mm`;
+                },
+                rows: [
+                    [16, 75, 201], [17, 77, 211], [18, 80, 220], [19, 83, 225], [20, 86, 230],
+                    [21, 88, 233], [22, 89, 235], [23, 90, 237], [24, 90, 238], [25, 89, 240],
+                    [26, 89, 242], [27, 85, 245], [28, 86, 249], [29, 84, 254], [30, 82, 258],
+                    [31, 79, 263], [32, 77, 269], [33, 74, 274], [34, 72, 278], [35, 70, 279],
+                    [36, 68, 279], [37, 66, 275], [38, 65, 269], [39, 64, 255], [40, 63, 240],
+                    [41, 63, 216], [42, 63, 192]
+                ],
+                showGraph: false
+            },
+            bladder: {
+                title: "Bladder Bifrontal Ventricle Horn Width",
+                category: "Abdomen & Organs",
+                description: "Maximum normal fetal bladder sagittal diameter upper limit by Trimester.",
+                lookupLabel: "Trimester (1-3)",
+                headers: ["Trimester", "Upper Limit Diameter (mm)"],
+                calc: (tri) => {
+                    const row = DATASETS.bladder.rows.find(r => r[0] == tri);
+                    return row ? `Trimester ${row[0]} Max Diameter: ${row[1]}` : "Enter Trimester 1, 2, or 3";
+                },
+                rows: [
+                    [1, "7 mm"], [2, "30 mm"], [3, "60 mm"]
+                ],
+                showGraph: false
+            },
+            efw: {
+                title: "Estimated Fetal Weight (EFW Percentiles)",
+                category: "Abdomen & Organs",
+                description: "Fetal weight percentiles (10th, 25th, 50th, 75th, 90th) in grams by Gestational Age.",
+                lookupLabel: "GA (Weeks)",
+                headers: ["Wk", "10th (g)", "25th (g)", "50th (g)", "75th (g)", "90th (g)"],
+                calc: (ga) => {
+                    const row = DATASETS.efw.rows.find(r => r[0] == ga);
+                    if(!row) return null;
+                    return `10th: ${row[1]}g | 50th: ${row[3]}g | 90th: ${row[5]}g`;
+                },
+                rows: [
+                    [29, 1000, 1130, 1270, 1390, 1540], [30, 1150, 1300, 1440, 1590, 1750], [31, 1310, 1470, 1630, 1790, 1970],
+                    [32, 1480, 1650, 1820, 2010, 2200], [33, 1650, 1830, 2020, 2230, 2430], [34, 1830, 2020, 2210, 2440, 2660],
+                    [35, 2010, 2210, 2410, 2660, 2880], [36, 2190, 2390, 2600, 2860, 3090], [37, 2360, 2570, 2780, 3050, 3290],
+                    [38, 2510, 2730, 2940, 3230, 3460], [39, 2660, 2880, 3080, 3380, 3610], [40, 2780, 3010, 3210, 3500, 3730],
+                    [41, 2880, 3120, 3310, 3590, 3810], [42, 2950, 3190, 3370, 3640, 3850]
+                ],
+                showGraph: false
+            },
+            gb_length: {
+                title: "Gall Bladder Length",
+                category: "Abdomen & Organs",
+                description: "Fetal Gall Bladder length in mm (Lower 2SD, Mean, Upper 2SD) by Gestational Age.",
+                lookupLabel: "GA (Weeks)",
+                headers: ["GA (wk)", "Lower 2SD (mm)", "Mean (mm)", "Upper 2SD (mm)"],
+                calc: (ga) => {
+                    const row = DATASETS.gb_length.rows.find(r => {
+                        if(typeof r[0] === 'number') return r[0] == ga;
+                        const [min, max] = r[0].split('-').map(Number);
+                        return ga >= min && ga <= max;
+                    });
+                    if(!row) return null;
+                    return `Mean: ${row[2]} mm (Normal: ${row[1]} - ${row[3]} mm)`;
+                },
+                rows: [
+                    ["21-22", 12, 16, 20], ["23-24", 14, 17, 20], ["25-26", 16, 19, 22],
+                    ["27-28", 16, 20, 24], ["29-30", 18, 23, 28], ["31-32", 19, 25, 31],
+                    ["33-34", 18, 23, 28], ["35-36", 20, 25, 30], ["37-38", 18, 26, 34], ["39-40", 19, 26, 33]
+                ],
+                showGraph: false
+            },
+            gb_td: {
+                title: "Gall Bladder Transverse Diameter (TD)",
+                category: "Abdomen & Organs",
+                description: "Fetal Gall Bladder Transverse Diameter in mm (Lower 2SD, Mean, Upper 2SD) by Gestational Age.",
+                lookupLabel: "GA (Weeks)",
+                headers: ["GA (wk)", "Lower 2SD (mm)", "Mean (mm)", "Upper 2SD (mm)"],
+                calc: (ga) => {
+                    const row = DATASETS.gb_td.rows.find(r => {
+                        if(typeof r[0] === 'number') return r[0] == ga;
+                        const [min, max] = r[0].split('-').map(Number);
+                        return ga >= min && ga <= max;
+                    });
+                    if(!row) return null;
+                    return `Mean TD: ${row[2]} mm (Normal: ${row[1]} - ${row[3]} mm)`;
+                },
+                rows: [
+                    ["21-22", 3, 5, 7], ["23-24", 4, 6, 8], ["25-26", 4, 6, 8],
+                    ["27-28", 5, 6, 7], ["29-30", 6, 8, 10], ["31-32", 6, 8, 10],
+                    ["33-34", 5, 7, 8], ["35-36", 5, 8, 11], ["37-38", 4, 6, 8], ["39-40", 4, 6, 8]
+                ],
+                showGraph: false
+            },
+            kidneys: {
+                title: "Kidneys Diameter & Circumference",
+                category: "Abdomen & Organs",
+                description: "Normal renal dimensions (Diameter & Circumference ranges in mm) by Gestational Age.",
+                lookupLabel: "GA (Weeks)",
+                headers: ["GA (wk)", "Kidney Diameter (mm)", "Kidney Circumference (mm)"],
+                calc: (ga) => {
+                    const row = DATASETS.kidneys.rows.find(r => r[0] == ga);
+                    if(!row) return null;
+                    return `Diameter: ${row[1]} mm | Circumference: ${row[2]} mm`;
+                },
+                rows: [
+                    [16, "6-12", "23-43"], [17, "8-14", "25-47"], [18, "9-15", "28-52"], [19, "10-16", "31-55"],
+                    [20, "10-17", "34-59"], [21, "11-18", "37-62"], [22, "12-19", "40-66"], [23, "13-20", "43-71"],
+                    [24, "14-21", "46-76"], [25, "14-22", "48-79"], [26, "15-22", "51-82"], [27, "16-23", "53-85"],
+                    [28, "17-24", "55-88"], [29, "18-25", "56-90"], [30, "18-26", "58-92"], [31, "19-27", "60-94"],
+                    [32, "19-27", "63-97"], [33, "20-28", "64-98"], [34, "20-28", "65-100"], [35, "21-29", "66-101"],
+                    [36, "21-29", "68-103"], [37, "22-30", "69-104"], [38, "22-30", "70-105"], [39, "22-30", "70-105"],
+                    [40, "22-30", "71-106"], [41, "22-30", "71-106"], [42, "22-30", "72-107"]
+                ],
+                showGraph: false
+            },
+            ls_length: {
+                title: "Lower Segment Length",
+                category: "Abdomen & Organs",
+                description: "Lower Segment (LS) length measurements in mm relative to Gestational Age.",
+                lookupLabel: "GA (Weeks)",
+                headers: ["GA (wk)", "LS Length (mm)"],
+                calc: (ga) => {
+                    const row = DATASETS.ls_length.rows.find(r => r[0] == ga);
+                    return row ? `LS Length: ${row[1]} mm` : null;
+                },
+                rows: [
+                    [20, 4], [21, 4], [22, 4], [23, 5], [24, 5], [25, 5], [26, 6], [27, 8], [28, 11],
+                    [29, 14], [30, 19], [31, 23], [32, 28], [33, 32], [34, 37], [35, 41], [36, 44],
+                    [37, 47], [38, 51], [39, 55], [40, 57]
+                ],
+                showGraph: false
+            },
+            penis: {
+                title: "Penis Length (10th, Mean, 90th)",
+                category: "Abdomen & Organs",
+                description: "Normal stretched penile length percentiles (10th, Mean/50th, 90th in mm) from GA 20 to 38 weeks.",
+                lookupLabel: "GA (Weeks)",
+                headers: ["GA (wk)", "10th Percentile (mm)", "Mean (mm)", "90th Percentile (mm)"],
+                calc: (ga) => {
+                    const row = DATASETS.penis.rows.find(r => r[0] == ga);
+                    if(!row) return null;
+                    return `Mean: ${row[2]} mm (Normal: ${row[1]} - ${row[3]} mm)`;
+                },
+                rows: [
+                    [20, 5.52, 7.27, 9.28], [21, 6.11, 7.94, 10.04], [22, 6.72, 8.64, 10.82], [23, 7.36, 9.36, 11.63],
+                    [24, 8.04, 10.12, 12.47], [25, 8.74, 10.90, 13.34], [26, 9.47, 11.72, 14.24], [27, 10.23, 12.56, 15.17],
+                    [28, 11.02, 13.43, 16.13], [29, 11.83, 14.33, 17.11], [30, 12.68, 15.26, 18.13], [31, 13.56, 16.22, 19.18],
+                    [32, 14.46, 17.21, 20.25], [33, 15.40, 18.23, 21.36], [34, 16.36, 19.28, 22.50], [35, 17.35, 20.36, 23.66],
+                    [36, 18.38, 21.46, 24.86], [37, 19.43, 22.60, 26.08], [38, 20.51, 23.77, 27.33]
+                ],
+                showGraph: false
+            },
+            placental: {
+                title: "Placental Thickness",
+                category: "Abdomen & Organs",
+                description: "Placental thickness reference ranges (+/-2SD in mm) across Gestational Age.",
+                lookupLabel: "GA (Weeks)",
+                headers: ["GA (wk)", "+/-2SD Range (mm)"],
+                calc: (ga) => {
+                    const row = DATASETS.placental.rows.find(r => r[0] == ga);
+                    return row ? `Placental Thickness: ${row[1]} mm` : "No exact entry for this week";
+                },
+                rows: [
+                    [9, "6-14"], [13, "10-21"], [17, "12-27"], [21, "11-30"],
+                    [25, "17-32"], [29, "22-37"], [33, "25-39"], [37, "25-42"]
+                ],
+                showGraph: false
+            },
+            tc_ac: {
+                title: "Thoracic / Abdominal Ratio (TC/AC)",
+                category: "Abdomen & Organs",
+                description: "Critical biometric ratio cutoff for predicting Lethal Fetal Pulmonary Hypoplasia.",
+                lookupLabel: "Calculated Ratio",
+                headers: ["Ratio Cutoff Threshold", "Clinical Diagnostic Implication"],
+                calc: (val) => {
+                    if(val < 0.8) return "⚠️ CRITICAL: TC/AC < 0.8 is indicative of Pulmonary Hypoplasia!";
+                    return "TC/AC >= 0.8 is within normal thoracic ratio parameters.";
+                },
+                rows: [
+                    ["< 0.8", "Pulmonary Hypoplasia Risk"]
+                ],
+                showGraph: false
+            },
+            colon_td: {
+                title: "Transverse Colon Diameter",
+                category: "Abdomen & Organs",
+                description: "Normal fetal transverse colon diameter percentiles (10th, 50th, 90th in cm) from GA 26 to 42.",
+                lookupLabel: "GA (Weeks)",
+                headers: ["GA (wk)", "10th Percentile (cm)", "50th Percentile (cm)", "90th Percentile (cm)"],
+                calc: (ga) => {
+                    const row = DATASETS.colon_td.rows.find(r => r[0] == ga);
+                    if(!row) return null;
+                    return `50th: ${row[2]} cm (Range: ${row[1]} - ${row[3]} cm)`;
+                },
+                rows: [
+                    [26, 0.1, 0.5, 0.9], [27, 0.2, 0.5, 0.9], [28, 0.3, 0.6, 1.0], [29, 0.4, 0.7, 1.1],
+                    [30, 0.4, 0.8, 1.1], [31, 0.5, 0.8, 1.2], [32, 0.6, 0.9, 1.3], [33, 0.6, 1.0, 1.3],
+                    [34, 0.7, 1.1, 1.4], [35, 0.8, 1.1, 1.5], [36, 0.9, 1.2, 1.6], [37, 1.0, 1.3, 1.7],
+                    [38, 1.1, 1.4, 1.8], [39, 1.2, 1.5, 1.9], [40, 1.3, 1.6, 2.0], [41, 1.4, 1.7, 2.1],
+                    [42, 1.5, 1.9, 2.2]
+                ],
+                showGraph: false
+            },
+
+            // Category 4: Doppler & Brain
+            mca_pi: {
+                title: "Middle Cerebral Artery (MCA) PI",
+                category: "Doppler & Brain",
+                description: "Middle Cerebral Artery Pulsatility Index reference percentile curves vs Gestational Age.",
+                lookupLabel: "GA (Weeks)",
+                headers: ["GA (Weeks)", "5th Percentile", "50th Percentile", "95th Percentile"],
+                calc: (ga) => {
+                    const row = DATASETS.mca_pi.rows.find(r => r[0] == ga);
+                    if(!row) return null;
+                    return `50th: ${row[2]} (Range: ${row[1]} - ${row[3]})`;
+                },
+                rows: [
+                    [22, 1.40, 1.90, 2.60], [24, 1.55, 2.05, 2.75], [27, 1.68, 2.15, 2.80],
+                    [30, 1.62, 2.08, 2.72], [32, 1.52, 1.98, 2.62], [35, 1.35, 1.80, 2.40],
+                    [37, 1.15, 1.60, 2.20], [40, 0.95, 1.38, 1.92], [42, 0.80, 1.25, 1.80]
+                ],
+                showGraph: true
+            },
+            umb_pi: {
+                title: "Umbilical Artery PI (Umbilical PI)",
+                category: "Doppler & Brain",
+                description: "Doppler reference curve derived using formula: UmbPI = 1.83166 - 0.02344 × (GA)",
+                formula: "UmbPI = 1.83166 - 0.02344 × GA",
+                lookupLabel: "GA (Weeks)",
+                headers: ["Maturity (Weeks)", "Mean Umb PI", "Upper Limit (~95th)", "Lower Limit (~5th)"],
+                calc: (ga) => {
+                    if(ga < 22 || ga > 41) return "Out of reference range (22-41 wks)";
+                    const mean = (1.83166 - 0.02344 * ga).toFixed(2);
+                    const upper = (parseFloat(mean) + 0.42).toFixed(2);
+                    const lower = (parseFloat(mean) - 0.42).toFixed(2);
+                    return `Mean PI: ${mean} (Range: ${lower} - ${upper})`;
+                },
+                rows: Array.from({length: 20}, (_, i) => {
+                    const ga = 22 + i;
+                    const mean = (1.83166 - 0.02344 * ga).toFixed(2);
+                    const upper = (parseFloat(mean) + 0.42).toFixed(2);
+                    const lower = (parseFloat(mean) - 0.42).toFixed(2);
+                    return [ga, mean, upper, lower];
+                }),
+                showGraph: true
+            },
+            umb_ri: {
+                title: "Umbilical Artery RI (Umbilical RI)",
+                category: "Doppler & Brain",
+                description: "Doppler reference curve derived using formula: UmbRI = 0.97957 - 0.01097 × (GA)",
+                formula: "UmbRI = 0.97957 - 0.01097 × GA",
+                lookupLabel: "GA (Weeks)",
+                headers: ["Maturity (Weeks)", "Mean Umb RI", "Upper Limit (~95th)", "Lower Limit (~5th)"],
+                calc: (ga) => {
+                    if(ga < 22 || ga > 41) return "Out of reference range (22-41 wks)";
+                    const mean = (0.97957 - 0.01097 * ga).toFixed(2);
+                    const upper = (parseFloat(mean) + 0.13).toFixed(2);
+                    const lower = (parseFloat(mean) - 0.14).toFixed(2);
+                    return `Mean RI: ${mean} (Range: ${lower} - ${upper})`;
+                },
+                rows: Array.from({length: 20}, (_, i) => {
+                    const ga = 22 + i;
+                    const mean = (0.97957 - 0.01097 * ga).toFixed(2);
+                    const upper = (parseFloat(mean) + 0.13).toFixed(2);
+                    const lower = (parseFloat(mean) - 0.14).toFixed(2);
+                    return [ga, mean, upper, lower];
+                }),
+                showGraph: true
+            }
+        };
+
+        // Application State
+        let currentKey = 'two_sd';
+        let chartInstance = null;
+
+        // Initialize App
+        window.onload = () => {
+            switchDataset('two_sd');
+        };
+
+        // Theme Toggle Handler
+        function toggleDarkMode() {
+            const html = document.documentElement;
+            const icon = document.getElementById('themeIcon');
+            if (html.classList.contains('dark')) {
+                html.classList.remove('dark');
+                icon.className = 'fa-solid fa-moon';
+            } else {
+                html.classList.add('dark');
+                icon.className = 'fa-solid fa-sun';
+            }
+            if(DATASETS[currentKey].showGraph) {
+                renderChart(DATASETS[currentKey]);
+            }
+        }
+
+        // Switch Active Dataset
+        function switchDataset(key) {
+            currentKey = key;
+            const ds = DATASETS[key];
+
+            // Metadata update
+            document.getElementById('activeTitle').innerText = ds.title;
+            document.getElementById('activeDesc').innerText = ds.description;
+            document.getElementById('lookupLabel').innerText = ds.lookupLabel;
+            document.getElementById('categoryBadge').innerHTML = `<i class="fa-solid fa-folder"></i> ${ds.category}`;
+
+            const formulaTag = document.getElementById('formulaTag');
+            if (ds.formula) {
+                formulaTag.innerText = ds.formula;
+                formulaTag.classList.remove('hidden');
+            } else {
+                formulaTag.classList.add('hidden');
+            }
+
+            // Input Resets
+            document.getElementById('calcInput').value = '';
+            document.getElementById('calcValue').innerText = 'Enter value';
+            document.getElementById('tableFilter').value = '';
+
+            // Handle Graph Display Toggle
+            const chartCard = document.getElementById('chartCard');
+            const tableCard = document.getElementById('tableCard');
+
+            if (ds.showGraph) {
+                chartCard.classList.remove('hidden');
+                chartCard.classList.add('flex');
+                tableCard.classList.remove('lg:col-span-12');
+                tableCard.classList.add('lg:col-span-6');
+                renderChart(ds);
+            } else {
+                chartCard.classList.add('hidden');
+                chartCard.classList.remove('flex');
+                tableCard.classList.remove('lg:col-span-6');
+                tableCard.classList.add('lg:col-span-12');
+                if (chartInstance) {
+                    chartInstance.destroy();
+                    chartInstance = null;
+                }
+            }
+
+            renderTable(ds);
+        }
+
+        // Render Table Data
+        function renderTable(ds) {
+            const thead = document.getElementById('tableHead');
+            const tbody = document.getElementById('tableBody');
+
+            thead.innerHTML = `<tr>${ds.headers.map(h => `<th class="py-1.5 px-2 border-b dark:border-slate-600">${h}</th>`).join('')}</tr>`;
+
+            tbody.innerHTML = ds.rows.map(row => `
+                <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/40 transition-colors">
+                    ${row.map((cell, i) => `
+                        <td class="py-1 px-2 ${i === 0 ? 'font-bold text-slate-800 dark:text-slate-200' : ''}">
+                            ${cell}
+                        </td>
+                    `).join('')}
+                </tr>
+            `).join('');
+        }
+
+        // Quick Table Filter
+        function filterTable() {
+            const val = document.getElementById('tableFilter').value.toLowerCase();
+            const rows = document.querySelectorAll('#tableBody tr');
+            rows.forEach(row => {
+                row.style.display = row.innerText.toLowerCase().includes(val) ? '' : 'none';
+            });
+        }
+
+        // Interactive Value Lookup Calculator
+        function runCalculator() {
+            const inputVal = parseFloat(document.getElementById('calcInput').value);
+            const outputEl = document.getElementById('calcValue');
+            const ds = DATASETS[currentKey];
+
+            if (isNaN(inputVal)) {
+                outputEl.innerText = 'Enter value';
+                outputEl.className = 'text-xs font-bold text-sky-300 block leading-tight';
+                return;
+            }
+
+            const res = ds.calc(inputVal);
+            if (res) {
+                outputEl.innerText = res;
+                outputEl.className = 'text-xs font-bold text-emerald-400 block leading-tight';
+            } else {
+                outputEl.innerText = 'No matching entry';
+                outputEl.className = 'text-xs font-bold text-amber-300 block leading-tight';
+            }
+        }
+
+        // Render Doppler Chart.js
+        function renderChart(ds) {
+            const ctx = document.getElementById('mainChart').getContext('2d');
+            if (chartInstance) {
+                chartInstance.destroy();
+            }
+
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#cbd5e1' : '#475569';
+            const gridColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+
+            let chartConfig = {
+                type: 'line',
+                data: {
+                    labels: ds.rows.map(r => r[0]),
+                    datasets: [
+                        {
+                            label: ds.headers[3] || 'Upper Limit (~95th)',
+                            data: ds.rows.map(r => parseFloat(r[3])),
+                            borderColor: '#f43f5e',
+                            borderDash: [4, 4],
+                            tension: 0.3
+                        },
+                        {
+                            label: ds.headers[2] || 'Mean / 50th',
+                            data: ds.rows.map(r => parseFloat(r[2])),
+                            borderColor: '#0284c7',
+                            borderWidth: 2.5,
+                            tension: 0.3
+                        },
+                        {
+                            label: ds.headers[1] || 'Lower Limit (~5th)',
+                            data: ds.rows.map(r => parseFloat(r[1])),
+                            borderColor: '#10b981',
+                            borderDash: [4, 4],
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: textColor, font: { family: 'Inter', size: 10 } }
+                        },
+                        tooltip: {
+                            backgroundColor: isDark ? '#1e293b' : '#ffffff',
+                            titleColor: isDark ? '#f8fafc' : '#0f172a',
+                            bodyColor: isDark ? '#cbd5e1' : '#334155',
+                            borderColor: isDark ? '#334155' : '#e2e8f0',
+                            borderWidth: 1
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: textColor, font: { size: 10 } },
+                            grid: { color: gridColor },
+                            title: { display: true, text: ds.headers[0], color: textColor, font: { size: 10 } }
+                        },
+                        y: {
+                            ticks: { color: textColor, font: { size: 10 } },
+                            grid: { color: gridColor }
+                        }
+                    }
+                }
+            };
+
+            chartInstance = new Chart(ctx, chartConfig);
+        }
+    </script>
+</body>
+</html>
